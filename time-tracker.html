@@ -1,0 +1,160 @@
+<html>
+	<head>
+		<style>
+			#summary-holder {
+				display:flex;
+			}
+			#input-holder {
+				display: flex;
+				flex-direction: column;
+			}
+			#input-holder > div {
+				display: flex;
+				margin-bottom: 5px;
+			}
+			#input-holder > div > * {
+				margin-right: 10px;
+			}
+			#input-holder > div > span {
+				flex-grow: 1;
+				font-family: monospace;
+			}
+			#input-holder > div > select {
+				flex-grow: 5;
+			}
+			#input-holder > div > input{
+				flex-grow: 93;
+			}
+			#input-holder > div > span.type{
+				width: 11%;
+			}
+			#input-holder > div > span.explanation{
+				flex-grow: 94;
+			}
+			#input-holder > div > .submit-button {
+				flex-grow: 1;
+				height: 100%;
+				background-color: grey;
+				border: 1px solid green;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="summary-holder"></div>
+		<div id="input-holder"></div>
+	<body>
+	<script type="text/javascript">
+		// Generate a datestamp for today
+		const today = new Date();
+		const thisYear = String(today.getFullYear());
+		const thisMonth = String(today.getMonth() + 1).padStart(2, '0');
+		const thisDay = String(today.getDate()).padStart(2, '0');
+		const thisDatestamp = thisYear + "-" + thisMonth + "-" + thisDay;
+
+		const locallyStore = (thing) => {
+			if (!thing && thing !== null){
+				return;
+			}
+			if (thing === null){
+				localStorage.removeItem('JEF-time-track.' + thisDatestamp);
+			}
+			localStorage.setItem('JEF-time-track.' + thisDatestamp, JSON.stringify(thing));
+		};
+		const locallyGet = () => {
+			return JSON.parse(localStorage.getItem('JEF-time-track.' + thisDatestamp) || '{}');
+		};
+
+		const getCurrentTimeTodayRounded = () => {
+			const currentTimeToday = new Date();
+			currentTimeToday.setMinutes(Math.ceil(currentTimeToday.getMinutes() / 15) * 15, 0, 0);
+			return currentTimeToday;
+		};
+
+		const getHTMLElementFromString = (string) => {
+			var template = document.createElement('template');
+			string = string.trim();
+			template.innerHTML = string;
+			return template.content.firstChild;
+		};
+
+		// Get the logs for today
+		const todaysStats = locallyGet();
+		console.log("Stats:", todaysStats);
+
+		// Generate a summary of time spent today
+		const summary = {};
+		Object.keys(todaysStats).forEach((time) => {
+			const details = todaysStats[time];
+			const current = summary[details.type] || 0;
+			summary[details.type] = current + 15;
+		});
+		let summaryString = '<pre>';
+		Object.keys(summary).forEach((type) => {
+			const details = summary[type];
+			summaryString += (type + " " + String(details)).padStart(20, ' ');
+		});
+		summaryString += '</pre>';
+		const summaryEl = document.querySelector('#summary-holder').appendChild(getHTMLElementFromString(summaryString));
+
+
+		// Get the number of timeslots between now and the 'start' of today based on start time
+		const startTimeToday = new Date(thisYear + "-" + thisMonth + "-" + thisDay + " 07:00");
+		const currentTimeToday = getCurrentTimeTodayRounded();
+
+		// For each time period not in the stats, add an html thing for it
+		const inputHolderEl = document.querySelector('#input-holder');
+		while (startTimeToday <= currentTimeToday){
+			const startTime = String(startTimeToday.getHours()).padStart(2, '0') + String(startTimeToday.getMinutes()).padStart(2, '0');
+			// Check to see if the start time is in the stats already
+			if (todaysStats[startTime]){
+				inputHolderEl.appendChild(getHTMLElementFromString(
+					'<div id="' + startTime + '">' +
+						'<span>' + startTime + ':</span>' +
+						'<span class="type">' + todaysStats[startTime].type + '</span>' +
+						'<span class="explanation">&gt; ' + todaysStats[startTime].explanation + '</span>' +
+					'</div>'
+				));
+			} else {
+				// Create and insert the element
+				inputHolderEl.appendChild(getHTMLElementFromString(
+					'<div id="' + startTime + '">' +
+						'<span>' + startTime + ": </span>" +
+						'<select>' +
+							'<option value="not-working">not-working</option>' +
+							'<option value="idle">idle</option>' +
+							'<option value="meeting">meeting</option>' +
+							'<option value="unplanned-meeting">unplanned-meeting</option>' +
+							'<option value="task-management">task-management</option>' +
+							'<option value="coding">coding</option>' +
+							'<option value="fire-fighting">fire-fighting</option>' +
+						'</select>' +
+						'<input type="text" placeholder="What did you do during this time"/>' +
+						'<div class="submit-button"><center>save</center></div>' +
+					'</div>'
+				));
+			}
+
+			startTimeToday.setMinutes(startTimeToday.getMinutes() + 15);
+		}
+		document.querySelectorAll('.submit-button').forEach((button) => {
+			button.addEventListener('click', (evt) => {
+				const timeEl = evt.target.parentElement.parentElement;
+				const startTime = timeEl.id;
+				todaysStats[startTime] = {};
+				todaysStats[startTime].type = timeEl.querySelector('select').selectedOptions[0].getAttribute('value');
+				todaysStats[startTime].explanation = timeEl.querySelector('input').value;
+				if (todaysStats[startTime].explanation == ''){
+					todaysStats[startTime].explanation = 'N/A';
+				}
+				locallyStore(todaysStats);
+				localStorage.setItem('JEF.scroll', window.pageYOffset);
+				window.location = window.location;
+			});
+		});
+		const lastScroll = localStorage.getItem('JEF.scroll');
+		if (lastScroll){
+			window.scroll(0, lastScroll);
+			localStorage.removeItem('JEF.scroll');
+		}
+	</script>
+</html>
