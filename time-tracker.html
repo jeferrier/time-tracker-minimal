@@ -2,37 +2,27 @@
 	<head>
 		<style>
 			#summary-holder {
-				display:flex;
 			}
 			#input-holder {
-				display: flex;
-				flex-direction: column;
 			}
-			#input-holder > div {
-				display: flex;
+			#input-holder > tr {
 				margin-bottom: 5px;
-			}
-			#input-holder > div > * {
-				margin-right: 10px;
-			}
-			#input-holder > div > span {
-				flex-grow: 1;
 				font-family: monospace;
+				box-sizing: content-box;
 			}
-			#input-holder > div > select {
-				flex-grow: 5;
+			#input-holder td:nth-child(1) {
+				width: 3%;
 			}
-			#input-holder > div > input{
-				flex-grow: 93;
+			#input-holder td:nth-child(2) {
+				width: 7%;
 			}
-			#input-holder > div > span.type{
-				width: 11%;
+			#input-holder td:nth-child(3) {
+				width: 70%;
 			}
-			#input-holder > div > span.explanation{
-				flex-grow: 94;
+			#input-holder td:nth-child(4) {
+				width: 3%;
 			}
-			#input-holder > div > .submit-button {
-				flex-grow: 1;
+			#input-holder .submit-button {
 				height: 100%;
 				background-color: grey;
 				border: 1px solid green;
@@ -40,8 +30,8 @@
 		</style>
 	</head>
 	<body>
-		<div id="summary-holder"></div>
-		<div id="input-holder"></div>
+		<table id="summary-holder"></table>
+		<table id="input-holder"></table>
 	<body>
 	<script type="text/javascript">
 		// Generate a datestamp for today
@@ -96,6 +86,15 @@
 		summaryString += '</pre>';
 		const summaryEl = document.querySelector('#summary-holder').appendChild(getHTMLElementFromString(summaryString));
 
+		const types = [
+			'not-working',
+			'idle',
+			'meeting',
+			'unplanned-meeting',
+			'task-management',
+			'coding',
+			'fire-fighting'
+		];
 
 		// Get the number of timeslots between now and the 'start' of today based on start time
 		const startTimeToday = new Date(thisYear + "-" + thisMonth + "-" + thisDay + " 07:00");
@@ -103,42 +102,53 @@
 
 		// For each time period not in the stats, add an html thing for it
 		const inputHolderEl = document.querySelector('#input-holder');
+		let lastType = '';
 		while (startTimeToday <= currentTimeToday){
 			const startTime = String(startTimeToday.getHours()).padStart(2, '0') + String(startTimeToday.getMinutes()).padStart(2, '0');
 			// Check to see if the start time is in the stats already
 			if (todaysStats[startTime]){
+				lastType = todaysStats[startTime].type
 				inputHolderEl.appendChild(getHTMLElementFromString(
-					'<div id="' + startTime + '">' +
-						'<span>' + startTime + ':</span>' +
-						'<span class="type">' + todaysStats[startTime].type + '</span>' +
-						'<span class="explanation">&gt; ' + todaysStats[startTime].explanation + '</span>' +
-					'</div>'
+					'<tr id="' + startTime + '">' +
+						'<td>' + startTime + ':</td>' +
+						'<td class="type">' + todaysStats[startTime].type + '</td>' +
+						'<td class="explanation">&gt; ' + todaysStats[startTime].explanation + '</td>' +
+						'<td></td>' +
+					'</tr>'
 				));
 			} else {
+
+				let selectOptions = "";
+				types.forEach(type => {
+					selectOptions += '<option value="' + type + '"';
+					if (lastType == type){
+						selectOptions += ' selected="true"';
+					}
+					selectOptions += '>' + type + '</option>';
+				});
 				// Create and insert the element
 				inputHolderEl.appendChild(getHTMLElementFromString(
-					'<div id="' + startTime + '">' +
-						'<span>' + startTime + ": </span>" +
-						'<select>' +
-							'<option value="not-working">not-working</option>' +
-							'<option value="idle">idle</option>' +
-							'<option value="meeting">meeting</option>' +
-							'<option value="unplanned-meeting">unplanned-meeting</option>' +
-							'<option value="task-management">task-management</option>' +
-							'<option value="coding">coding</option>' +
-							'<option value="fire-fighting">fire-fighting</option>' +
-						'</select>' +
-						'<input type="text" placeholder="What did you do during this time"/>' +
-						'<div class="submit-button"><center>save</center></div>' +
-					'</div>'
+					'<tr id="' + startTime + '">' +
+						'<td>' + startTime + ": </td>" +
+						'<td>' +
+							'<select>' + selectOptions + '</select>' +
+						'</td>' +
+						'<td>' +
+							'<input type="text" style="width:97%;" placeholder="What did you do during this time"/>' +
+						'</td>' +
+						'<td>' +
+							'<div class="submit-button"><center>save</center></div>' +
+						'</td>' +
+					'</tr>'
 				));
+				lastType = '';
 			}
 
 			startTimeToday.setMinutes(startTimeToday.getMinutes() + 15);
 		}
 		document.querySelectorAll('.submit-button').forEach((button) => {
 			button.addEventListener('click', (evt) => {
-				const timeEl = evt.target.parentElement.parentElement;
+				const timeEl = evt.target.parentElement.parentElement.parentElement;
 				const startTime = timeEl.id;
 				todaysStats[startTime] = {};
 				todaysStats[startTime].type = timeEl.querySelector('select').selectedOptions[0].getAttribute('value');
