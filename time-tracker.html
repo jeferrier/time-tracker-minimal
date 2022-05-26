@@ -2,6 +2,12 @@
 	<head>
 		<style>
 			#summary-holder {
+				width: 100%;
+			}
+			#summary-holder > tr {
+				margin-bottom: 5px;
+				font-family: monospace;
+				box-sizing: content-box;
 			}
 			#input-holder {
 			}
@@ -69,23 +75,44 @@
 
 		// Get the logs for today
 		const todaysStats = locallyGet();
-		console.log("Stats:", todaysStats);
 
 		// Generate a summary of time spent today
-		const summary = {};
+		const summary = {total: 0};
 		Object.keys(todaysStats).forEach((time) => {
 			const details = todaysStats[time];
 			const current = summary[details.type] || 0;
 			summary[details.type] = current + 15;
+			summary.total += 15;
 		});
-		let summaryString = '<pre>';
-		Object.keys(summary).forEach((type) => {
-			const details = summary[type];
-			summaryString += (type + " " + String(details)).padStart(20, ' ');
-		});
-		summaryString += '</pre>';
-		const summaryEl = document.querySelector('#summary-holder').appendChild(getHTMLElementFromString(summaryString));
 
+		let headerRow = '<tr>';
+		let minutesRow = '<tr>';
+		let percentagesRow = '<tr>';
+		summary.total = summary.total - (summary['not-working'] || 0);
+		Object.keys(summary).forEach((type) => {
+			if (type == 'total'){
+				return;
+			}
+			const details = summary[type];
+			const total = summary.total;
+
+			headerRow += '<td>' + type + '</td>';
+			minutesRow += '<td>' + details + ' min</td>';
+			if (type == 'not-working'){
+				percentagesRow += '<td>N/A</td>';
+			} else {
+				percentagesRow += '<td>' + ((details / total) * 100).toFixed(2) + '%</td>';
+			}
+		});
+		headerRow += '</tr>';
+		minutesRow += '</tr>';
+		percentagesRow += '</tr>';
+		const summaryEl = document.querySelector('#summary-holder');
+		summaryEl.appendChild(getHTMLElementFromString(headerRow));
+		summaryEl.appendChild(getHTMLElementFromString(minutesRow));
+		summaryEl.appendChild(getHTMLElementFromString(percentagesRow));
+
+		// Define the types to be used in the dropdown and stored
 		const types = [
 			'not-working',
 			'idle',
