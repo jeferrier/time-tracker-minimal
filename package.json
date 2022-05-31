@@ -1,0 +1,26 @@
+{
+  "name": "time-tracker-minimal",
+  "version": "0.0.2",
+  "description": "A simple tool for tracking how your time is spent throughout the day",
+  "main": "time-tracker.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jeferrier/time-tracker-minimal.git"
+  },
+  "keywords": [
+    "time",
+    "tracking"
+  ],
+  "author": "James Ferrier",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jeferrier/time-tracker-minimal/issues"
+  },
+  "homepage": "https://github.com/jeferrier/time-tracker-minimal#readme",
+  "dependencies": {
+    "eslint": "^8.16.0"
+  }
+}

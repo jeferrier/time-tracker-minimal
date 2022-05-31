@@ -1,0 +1,27 @@
+{
+  "env": {
+    "es6": true
+  },
+  "rules": {
+    "semi": [
+      "error", "always"
+    ],
+    "semi-spacing": [
+      "error",
+      {
+        "before": false,
+        "after": false
+      }
+    ],
+    "no-extra-semi": "error",
+    "no-extra-parens": "error",
+    "space-infix-ops": "error",
+    "quotes": [
+      "error",
+      "single",
+      {
+        "avoidEscape":  true
+      }
+    ]
+  }
+}

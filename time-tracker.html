@@ -1,80 +1,18 @@
 <html>
-	<head>
-		<style>
-			#summary-holder {
-				width: 100%;
-			}
-			#summary-holder > tr {
-				margin-bottom: 5px;
-				font-family: monospace;
-				box-sizing: content-box;
-			}
-			#input-holder {
-			}
-			#input-holder > tr {
-				margin-bottom: 5px;
-				font-family: monospace;
-				box-sizing: content-box;
-			}
-			#input-holder td:nth-child(1) {
-				width: 3%;
-			}
-			#input-holder td:nth-child(2) {
-				width: 7%;
-			}
-			#input-holder td:nth-child(3) {
-				width: 70%;
-			}
-			#input-holder td:nth-child(4) {
-				width: 3%;
-			}
-			#input-holder .submit-button {
-				height: 100%;
-				background-color: grey;
-				border: 1px solid green;
-			}
-		</style>
-	</head>
+	<head></head>
 	<body>
 		<table id="summary-holder"></table>
 		<table id="input-holder"></table>
+		<div class="dark-mode-button"><center>Toggle Dark Mode</center></div>
 	<body>
+	<script type="text/javascript" src="js/constants.js"></script>
+	<script type="text/javascript" src="js/library-functions.js"></script>
+	<script type="text/javascript" src="js/inject-styles.js"></script>
 	<script type="text/javascript">
-		// Generate a datestamp for today
-		const today = new Date();
-		const thisYear = String(today.getFullYear());
-		const thisMonth = String(today.getMonth() + 1).padStart(2, '0');
-		const thisDay = String(today.getDate()).padStart(2, '0');
-		const thisDatestamp = thisYear + "-" + thisMonth + "-" + thisDay;
-
-		const locallyStore = (thing) => {
-			if (!thing && thing !== null){
-				return;
-			}
-			if (thing === null){
-				localStorage.removeItem('JEF-time-track.' + thisDatestamp);
-			}
-			localStorage.setItem('JEF-time-track.' + thisDatestamp, JSON.stringify(thing));
-		};
-		const locallyGet = () => {
-			return JSON.parse(localStorage.getItem('JEF-time-track.' + thisDatestamp) || '{}');
-		};
-
-		const getCurrentTimeTodayRounded = () => {
-			const currentTimeToday = new Date();
-			currentTimeToday.setMinutes(Math.ceil(currentTimeToday.getMinutes() / 15) * 15, 0, 0);
-			return currentTimeToday;
-		};
-
-		const getHTMLElementFromString = (string) => {
-			var template = document.createElement('template');
-			string = string.trim();
-			template.innerHTML = string;
-			return template.content.firstChild;
-		};
+		const thisDatestamp = help.getSaneDateStamp();
 
 		// Get the logs for today
-		const todaysStats = locallyGet();
+		const todaysStats = help.locallyGet(help.getSaneDateStamp() + '.slots');
 
 		// Generate a summary of time spent today
 		const summary = {total: 0};
@@ -85,6 +23,7 @@
 			summary.total += 15;
 		});
 
+		// Print the summary into the DOM
 		let headerRow = '<tr>';
 		let minutesRow = '<tr>';
 		let percentagesRow = '<tr>';
@@ -108,34 +47,27 @@
 		minutesRow += '</tr>';
 		percentagesRow += '</tr>';
 		const summaryEl = document.querySelector('#summary-holder');
-		summaryEl.appendChild(getHTMLElementFromString(headerRow));
-		summaryEl.appendChild(getHTMLElementFromString(minutesRow));
-		summaryEl.appendChild(getHTMLElementFromString(percentagesRow));
+		summaryEl.appendChild(help.getHTMLElementFromString(headerRow));
+		summaryEl.appendChild(help.getHTMLElementFromString(minutesRow));
+		summaryEl.appendChild(help.getHTMLElementFromString(percentagesRow));
 
-		// Define the types to be used in the dropdown and stored
-		const types = [
-			'not-working',
-			'idle',
-			'meeting',
-			'unplanned-meeting',
-			'task-management',
-			'coding',
-			'fire-fighting'
-		];
-
-		// Get the number of timeslots between now and the 'start' of today based on start time
-		const startTimeToday = new Date(thisYear + "-" + thisMonth + "-" + thisDay + " 07:00");
-		const currentTimeToday = getCurrentTimeTodayRounded();
+		// We'll use these times to figure out how many timeslots to render
+		const startTimeToday = new Date(thisDatestamp + " " + startTime);
+		const currentTimeToday = help.getCurrentTimeTodayRoundedTo15Minutes();
 
 		// For each time period not in the stats, add an html thing for it
 		const inputHolderEl = document.querySelector('#input-holder');
 		let lastType = '';
+		let lastExplanation = '';
 		while (startTimeToday <= currentTimeToday){
 			const startTime = String(startTimeToday.getHours()).padStart(2, '0') + String(startTimeToday.getMinutes()).padStart(2, '0');
 			// Check to see if the start time is in the stats already
 			if (todaysStats[startTime]){
+				// If it is, remember the type and explanation for later
 				lastType = todaysStats[startTime].type
-				inputHolderEl.appendChild(getHTMLElementFromString(
+				lastExplanation = todaysStats[startTime].explanation
+				// Also render an html displaying the contents of the timeslot
+				inputHolderEl.appendChild(help.getHTMLElementFromString(
 					'<tr id="' + startTime + '">' +
 						'<td>' + startTime + ':</td>' +
 						'<td class="type">' + todaysStats[startTime].type + '</td>' +
@@ -144,8 +76,9 @@
 					'</tr>'
 				));
 			} else {
-
+				// If it's not in the stats, it still needs to be filled in
 				let selectOptions = "";
+				// Make a select of the types, and use the lastType to select the most recently used by default
 				types.forEach(type => {
 					selectOptions += '<option value="' + type + '"';
 					if (lastType == type){
@@ -153,26 +86,32 @@
 					}
 					selectOptions += '>' + type + '</option>';
 				});
-				// Create and insert the element
-				inputHolderEl.appendChild(getHTMLElementFromString(
+				// Make the row, adding in the select, and add the lastExplanation as the suggested value
+				// And insert it into the DOM
+				inputHolderEl.appendChild(help.getHTMLElementFromString(
 					'<tr id="' + startTime + '">' +
 						'<td>' + startTime + ": </td>" +
 						'<td>' +
 							'<select>' + selectOptions + '</select>' +
 						'</td>' +
 						'<td>' +
-							'<input type="text" style="width:97%;" placeholder="What did you do during this time"/>' +
+							'<input type="text" style="width:97%;" placeholder="What did you do during this time" value="' + lastExplanation + '"/>' +
 						'</td>' +
 						'<td>' +
 							'<div class="submit-button"><center>save</center></div>' +
 						'</td>' +
 					'</tr>'
 				));
+				// Clear the 'lastX' options, so the next row gets nothing populated
 				lastType = '';
+				lastExplanation = '';
 			}
 
+			// Advance to the next timeslot
 			startTimeToday.setMinutes(startTimeToday.getMinutes() + 15);
 		}
+
+		// Add an event listener for all the 'Save' buttons
 		document.querySelectorAll('.submit-button').forEach((button) => {
 			button.addEventListener('click', (evt) => {
 				const timeEl = evt.target.parentElement.parentElement.parentElement;
@@ -183,15 +122,26 @@
 				if (todaysStats[startTime].explanation == ''){
 					todaysStats[startTime].explanation = 'N/A';
 				}
-				locallyStore(todaysStats);
-				localStorage.setItem('JEF.scroll', window.pageYOffset);
+				help.locallyStore(todaysStats, help.getSaneDateStamp() + '.slots');
+				help.locallyStore(window.pageYOffset, 'scroll');
 				window.location = window.location;
 			});
 		});
-		const lastScroll = localStorage.getItem('JEF.scroll');
+
+		// Add an event listener for the 'Toggle Dark Mode' button
+		document.querySelectorAll('.dark-mode-button').forEach((button) => {
+			button.addEventListener('click', (evt) => {
+				help.locallyStore(!help.locallyGet('dark-mode-enabled'), 'dark-mode-enabled');
+				help.locallyStore(window.pageYOffset, 'scroll');
+				window.location = window.location;
+			});
+		});
+
+		// If we just came back to the page, set the scroll to the last saved scroll position
+		const lastScroll = help.locallyGet('scroll')
 		if (lastScroll){
 			window.scroll(0, lastScroll);
-			localStorage.removeItem('JEF.scroll');
 		}
+		help.locallyStore(null, 'scroll');
 	</script>
 </html>
