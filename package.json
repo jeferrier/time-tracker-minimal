@@ -22,5 +22,11 @@
   "homepage": "https://github.com/jeferrier/time-tracker-minimal#readme",
   "dependencies": {
     "eslint": "^8.16.0"
-  }
+  },
+  "scripts": {
+    "eslint": "node node_modules/eslint/bin/eslint.js ./js"
+  },
+  "pre-commit": [
+    "eslint"
+  ]
 }
