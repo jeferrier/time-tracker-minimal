@@ -3,9 +3,6 @@
   "version": "0.0.2",
   "description": "A simple tool for tracking how your time is spent throughout the day",
   "main": "time-tracker.html",
-  "scripts": {
-    "eslint": "node node_modules/eslint/bin/eslint.js ./js"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jeferrier/time-tracker-minimal.git"
@@ -22,6 +19,12 @@
   "homepage": "https://github.com/jeferrier/time-tracker-minimal#readme",
   "dependencies": {
     "eslint": "^8.16.0"
+  },
+  "devDependencies": {
+    "pre-commit": "^1.2.2"
+  },
+  "scripts": {
+    "eslint": "node node_modules/eslint/bin/eslint.js ./js"
   },
   "pre-commit": [
     "eslint"
