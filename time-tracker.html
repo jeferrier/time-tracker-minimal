@@ -12,7 +12,7 @@
 		const thisDatestamp = help.getSaneDateStamp();
 
 		// Get the logs for today
-		const todaysStats = help.locallyGet(help.getSaneDateStamp() + '.slots');
+		const todaysStats = help.locallyGet(help.getSaneDateStamp() + '.slots') || {};
 
 		// Generate a summary of time spent today
 		const summary = {total: 0};
