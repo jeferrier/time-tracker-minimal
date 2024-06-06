@@ -1,9 +1,9 @@
 <html>
 	<head></head>
 	<body>
-		<table id="summary-holder"></table>
-		<table id="input-holder"></table>
 		<div class="dark-mode-button"><center>Toggle Dark Mode</center></div>
+		<table id="input-holder"></table>
+		<table id="summary-holder"></table>
 	<body>
 	<script type="text/javascript" src="js/constants.js"></script>
 	<script type="text/javascript" src="js/library-functions.js"></script>
@@ -23,6 +23,7 @@
 			summary.total += 15;
 		});
 
+		// --------------------------------------------------------
 		// Print the summary into the DOM
 		let headerRow = '<tr>';
 		let minutesRow = '<tr>';
@@ -51,6 +52,7 @@
 		summaryEl.appendChild(help.getHTMLElementFromString(minutesRow));
 		summaryEl.appendChild(help.getHTMLElementFromString(percentagesRow));
 
+		// --------------------------------------------------------
 		// We'll use these times to figure out how many timeslots to render
 		const startTimeToday = new Date(thisDatestamp + " " + startTime);
 		const currentTimeToday = help.getCurrentTimeTodayRoundedTo15Minutes();
@@ -66,11 +68,23 @@
 				// If it is, remember the type and explanation for later
 				lastType = todaysStats[startTime].type
 				lastExplanation = todaysStats[startTime].explanation
+
+				// Make a select of the types, and select the current type for this element 
+				let selectOptions = "";
+				types.forEach(type => {
+					selectOptions += '<option value="' + type + '"';
+					if (lastType == type){
+						selectOptions += ' selected="true"';
+					}
+					selectOptions += '>' + type + '</option>';
+				});
 				// Also render an html displaying the contents of the timeslot
 				inputHolderEl.appendChild(help.getHTMLElementFromString(
-					'<tr id="' + startTime + '">' +
+					'<tr id="T' + startTime + '" class="time-display">' +
 						'<td>' + startTime + ':</td>' +
-						'<td class="type">' + todaysStats[startTime].type + '</td>' +
+						'<td class="type">' +
+							'<select>' + selectOptions + '</select>' +
+						'</td>' +
 						'<td class="explanation">&gt; ' + todaysStats[startTime].explanation + '</td>' +
 						'<td></td>' +
 					'</tr>'
@@ -89,7 +103,7 @@
 				// Make the row, adding in the select, and add the lastExplanation as the suggested value
 				// And insert it into the DOM
 				inputHolderEl.appendChild(help.getHTMLElementFromString(
-					'<tr id="' + startTime + '">' +
+					'<tr id="T' + startTime + '">' +
 						'<td>' + startTime + ": </td>" +
 						'<td>' +
 							'<select>' + selectOptions + '</select>' +
@@ -98,7 +112,7 @@
 							'<input type="text" style="width:97%;" placeholder="What did you do during this time" value="' + lastExplanation + '"/>' +
 						'</td>' +
 						'<td>' +
-							'<div class="submit-button"><center>save</center></div>' +
+							'<div class="submit-button" data-time="T' + startTime + '"><center>save</center></div>' +
 						'</td>' +
 					'</tr>'
 				));
@@ -111,11 +125,24 @@
 			startTimeToday.setMinutes(startTimeToday.getMinutes() + 15);
 		}
 
+		// --------------------------------------------------------
 		// Add an event listener for all the 'Save' buttons
 		document.querySelectorAll('.submit-button').forEach((button) => {
 			button.addEventListener('click', (evt) => {
-				const timeEl = evt.target.parentElement.parentElement.parentElement;
-				const startTime = timeEl.id;
+				// Crawl all the type selectors and update any changed values
+				document.querySelectorAll('.time-display').forEach((trEl) => {
+					let time = trEl.getAttribute('id').substring(1);
+					let selectedType = trEl.querySelector('select').selectedOptions[0].getAttribute('value');
+					if (
+						todaysStats[time] !== undefined
+						&& todaysStats[time].type !== selectedType
+					){
+						todaysStats[time].type = selectedType;
+					}
+				});
+
+				const startTime = evt.target.parentElement.getAttribute('data-time').substring(1);
+				const timeEl = document.querySelector('tr#T' + startTime);
 				todaysStats[startTime] = {};
 				todaysStats[startTime].type = timeEl.querySelector('select').selectedOptions[0].getAttribute('value');
 				todaysStats[startTime].explanation = timeEl.querySelector('input').value;
@@ -128,6 +155,7 @@
 			});
 		});
 
+		// --------------------------------------------------------
 		// Add an event listener for the 'Toggle Dark Mode' button
 		document.querySelectorAll('.dark-mode-button').forEach((button) => {
 			button.addEventListener('click', (evt) => {
@@ -137,6 +165,7 @@
 			});
 		});
 
+		// --------------------------------------------------------
 		// If we just came back to the page, set the scroll to the last saved scroll position
 		const lastScroll = help.locallyGet('scroll')
 		if (lastScroll){
