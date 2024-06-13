@@ -166,6 +166,24 @@
 		});
 
 		// --------------------------------------------------------
+		// Make things that look like ticket references clickable
+		// TODO: Copy the correct url to the clipboard instead of just opening it
+		const ticketFormat = /[A-Z]+-[0-9]+/;
+		document.querySelectorAll('td.explanation').forEach(tdEl => {
+			let innerTextString = tdEl.innerHTML;
+			let matchResult = innerTextString.match(ticketFormat);
+			if (matchResult){
+				let destination = matchResult[0];
+				let beforeString = innerTextString.substring(0, matchResult.index);
+				let afterString = innerTextString.substring(matchResult.index + destination.length);
+				innerTextString = beforeString +
+					`<a href="https://simplifymd.atlassian.net/brows/${destination}">${destination}</a>` +
+					afterString;
+				tdEl.innerHTML = innerTextString;
+			}
+		});
+
+		// --------------------------------------------------------
 		// If we just came back to the page, set the scroll to the last saved scroll position
 		const lastScroll = help.locallyGet('scroll')
 		if (lastScroll){
